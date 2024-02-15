@@ -29,9 +29,51 @@ namespace CGL {
   Color Texture::sample_nearest(Vector2D uv, int level) {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
+    
+    Vector2D new_uv = Vector2D(uv.x * mip.width, uv.y * mip.height);
+    
+    //cout << "scaled uv: " << new_uv << "  ";
 
+    uv = new_uv;
+    Vector2D d = new_uv - Vector2D(0.5, 0.5);
 
+    float ufloor = floor(d.x);
+    float vfloor = floor(d.y);
+    float uceil = ceil(d.x);
+    float vceil = ceil(d.y);
 
+    //cout << ufloor << " " << uceil << " " << vfloor << " " << vceil << "\n";
+    
+
+    Vector2D u00 = Vector2D(ufloor, vfloor);
+    Vector2D u10 = Vector2D(uceil, vfloor);
+    Vector2D u01 = Vector2D(ufloor, vceil);
+    Vector2D u11 = Vector2D(uceil, vceil);
+
+    float du00 = (d - u00).norm();
+    float du01 = (d - u01).norm();
+    float du10 = (d - u10).norm();
+    float du11 = (d - u11).norm();
+
+    float minNorm = min(du00, min(du01, min(du10, du11)));
+
+    if (du00 == minNorm) { 
+
+        //cout << mip.get_texel(u00.x, u00.y);
+        return mip.get_texel(u00.x, u00.y );
+    }
+    else if (du01 == minNorm) {
+        return mip.get_texel(u01.x, u01.y);
+
+    }
+    else if (du10 == minNorm) {
+        return mip.get_texel(u10.x, u10.y);
+
+    }
+    else if (du11 == minNorm) {
+        return mip.get_texel(u11.x, u11.y);
+
+    }
 
     // return magenta for invalid level
     return Color(1, 0, 1);
@@ -40,8 +82,36 @@ namespace CGL {
   Color Texture::sample_bilinear(Vector2D uv, int level) {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
+    Vector2D new_uv = Vector2D(uv.x * mip.width, uv.y * mip.height);
 
+    uv = new_uv;
+    Vector2D d = new_uv - Vector2D(0.5, 0.5);
 
+    float ufloor = floor(d.x);
+    float vfloor = floor(d.y);
+    float uceil = ceil(d.x);
+    float vceil = ceil(d.y);
+
+    float s = d.x - ufloor;
+    float t = d.y - vfloor;
+
+    //cout << ufloor << " " << uceil << " " << vfloor << " " << vceil << "\n";
+    
+    Color u00 = mip.get_texel(ufloor + 1, vfloor + 1);
+    Color u10 = mip.get_texel(uceil + 1, vfloor + 1);
+    Color u01 = mip.get_texel(ufloor + 1, vceil);
+    Color u11 = mip.get_texel(uceil + 1, vceil + 1);
+    
+    //cout << u00 << u10 << u01 << u11 << "\n";
+
+    Color u0 = u00 * s + (1 - s) * u10;
+    Color u1 = u01 * s + (1 - s) * u11;
+
+    //cout << u0 << u1 << "\n";
+
+    Color f = u0 * t + (1 - t) * u1;
+    return f;
+    
 
 
     // return magenta for invalid level

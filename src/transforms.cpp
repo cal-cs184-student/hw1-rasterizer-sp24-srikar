@@ -3,6 +3,8 @@
 #include "CGL/matrix3x3.h"
 #include "CGL/vector2D.h"
 #include "CGL/vector3D.h"
+#include <math.h> 
+
 
 namespace CGL {
 
@@ -15,22 +17,26 @@ Matrix3x3 translate(float dx, float dy) {
 	// Part 3: Fill this in.
 
 
-	return Matrix3x3();
+	return Matrix3x3(1, 0, dx, 0, 1, dy, 0, 0, 1);
 }
 
 Matrix3x3 scale(float sx, float sy) {
 	// Part 3: Fill this in.
 
 
-	return Matrix3x3();
+	return Matrix3x3(sx, 0, 0, 0, sy, 0, 0, 0, 1);
 }
 
 // The input argument is in degrees counterclockwise
 Matrix3x3 rotate(float deg) {
 	// Part 3: Fill this in.
+	float rad = deg * 3.14159 / 180;
+
+	float cs = cos(rad);
+	float sn = sin(rad);
 
 
-	return Matrix3x3();
+	return Matrix3x3(cs, -1 * sn, 0, sn, cs, 0, 0, 0, 1);
 }
 
 }
