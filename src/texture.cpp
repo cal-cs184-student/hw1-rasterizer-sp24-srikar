@@ -57,6 +57,9 @@ namespace CGL {
 
     float minNorm = min(du00, min(du01, min(du10, du11)));
 
+
+
+
     if (du00 == minNorm) { 
 
         //cout << mip.get_texel(u00.x, u00.y);
