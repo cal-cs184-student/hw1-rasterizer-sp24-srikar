@@ -10,6 +10,65 @@ namespace CGL {
     // TODO: Task 6: Fill this in.
 
 
+      if (sp.lsm == L_ZERO) {
+          if (sp.psm == P_NEAREST) {
+              return sample_nearest(sp.p_uv, 0);
+          }
+          return sample_bilinear(sp.p_uv, 0);
+      }
+
+      else if (sp.lsm == L_NEAREST) {
+
+          float level = get_level(sp);
+          
+          level = round(level);
+          
+          //cout << level << "\n";
+          if (level < 0) {
+              level = 0;
+          }
+          if (level > mipmap.size()) {
+              level = mipmap.size();
+          }
+
+          if (sp.psm == P_NEAREST) {
+              return sample_nearest(sp.p_uv, level);
+          }
+          return sample_bilinear(sp.p_uv, level);
+
+      }
+
+      else if (sp.lsm == L_LINEAR) {
+
+          float level = get_level(sp);
+          float levela = floor(level);
+          float levelb = ceil(level);
+          float d = level - levela;
+
+          if (levela < 0) {
+              levela = 0;
+          }
+          if (levela >= mipmap.size()) {
+              levela = mipmap.size() - 1;
+          }
+          if (levelb < 0) {
+              levelb = 0;
+          }
+          if (levelb >= mipmap.size()) {
+              levelb = mipmap.size() - 1;
+          }
+
+          if (sp.psm == P_NEAREST) {
+              return sample_nearest(sp.p_uv, levela) * (1-d) + sample_nearest(sp.p_uv, levelb) * d;
+          }
+          return sample_bilinear(sp.p_uv, levela) * (1 - d) + sample_bilinear(sp.p_uv, levelb) * d;
+
+
+      }
+
+
+
+
 // return magenta for invalid level
     return Color(1, 0, 1);
   }
@@ -17,9 +76,17 @@ namespace CGL {
   float Texture::get_level(const SampleParams& sp) {
     // TODO: Task 6: Fill this in.
 
+      Vector2D x = Vector2D(sp.p_dx_uv.x * (width - 1), sp.p_dx_uv.y * (height - 1));
+
+      Vector2D y = Vector2D(sp.p_dy_uv.x * (width - 1), sp.p_dy_uv.y * (height - 1));
 
 
-    return 0;
+      float xnorm = x.norm();
+      float ynorm = y.norm();
+
+      float m = max(xnorm, ynorm);
+
+      return log2(m);
   }
 
   Color MipLevel::get_texel(int tx, int ty) {
@@ -30,8 +97,10 @@ namespace CGL {
     // TODO: Task 5: Fill this in.
     auto& mip = mipmap[level];
     
-    Vector2D new_uv = Vector2D(uv.x * mip.width, uv.y * mip.height);
-    
+    Vector2D new_uv = Vector2D(uv.x * (mip.width - 1), uv.y * (mip.height - 1));
+    Vector2D rounded = Vector2D(round(new_uv.x), round(new_uv.y));
+
+    return mip.get_texel(rounded.x, rounded.y);
     //cout << "scaled uv: " << new_uv << "  ";
 
     uv = new_uv;
@@ -43,6 +112,7 @@ namespace CGL {
     float vceil = ceil(d.y);
 
     //cout << ufloor << " " << uceil << " " << vfloor << " " << vceil << "\n";
+    
     
 
     Vector2D u00 = Vector2D(ufloor, vfloor);
@@ -84,12 +154,13 @@ namespace CGL {
 
   Color Texture::sample_bilinear(Vector2D uv, int level) {
     // TODO: Task 5: Fill this in.
+      //cout << level;
     auto& mip = mipmap[level];
-    Vector2D new_uv = Vector2D(uv.x * mip.width, uv.y * mip.height);
+    Vector2D new_uv = Vector2D(uv.x * (mip.width - 1), uv.y * (mip.height - 1));
 
     uv = new_uv;
-    Vector2D d = new_uv - Vector2D(0.5, 0.5);
-
+    Vector2D d = new_uv; // -Vector2D(0.5, 0.5);
+    
     float ufloor = floor(d.x);
     float vfloor = floor(d.y);
     float uceil = ceil(d.x);
@@ -98,12 +169,15 @@ namespace CGL {
     float s = d.x - ufloor;
     float t = d.y - vfloor;
 
+
     //cout << ufloor << " " << uceil << " " << vfloor << " " << vceil << "\n";
+    Color u00 = mip.get_texel(ufloor, vfloor);
+    Color u10 = mip.get_texel(uceil, vfloor);
     
-    Color u00 = mip.get_texel(ufloor + 1, vfloor + 1);
-    Color u10 = mip.get_texel(uceil + 1, vfloor + 1);
-    Color u01 = mip.get_texel(ufloor + 1, vceil);
-    Color u11 = mip.get_texel(uceil + 1, vceil + 1);
+    Color u01 = mip.get_texel(ufloor, vceil);
+    
+    Color u11 = mip.get_texel(uceil, vceil);
+    
     
     //cout << u00 << u10 << u01 << u11 << "\n";
 

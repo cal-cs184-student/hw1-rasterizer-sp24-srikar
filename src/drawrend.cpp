@@ -8,6 +8,7 @@
 #include "texture.h"
 #include <ctime>
 #include "rasterizer.h"
+#include <time.h>
 
 using namespace std;
 
@@ -189,6 +190,12 @@ void DrawRend::keyboard_event(int key, int event, unsigned char mods) {
     redraw();
     break;
 
+  case 'J':
+      current_svg = (current_svg + 1) % 2;
+      redraw();
+      break;
+
+
     // set the sampling rate to 1, 4, 9, or 16
   case '=':
     if (sample_rate < 16) {
@@ -304,8 +311,9 @@ void DrawRend::redraw() {
   software_rasterizer->clear_buffers();
 
   SVG& svg = *svgs[current_svg];
-  svg.draw(software_rasterizer, ndc_to_screen * svg_to_ndc[current_svg]);
 
+  svg.draw(software_rasterizer, ndc_to_screen * svg_to_ndc[current_svg]);
+  
   // draw canvas outline
   Vector2D a = ndc_to_screen * svg_to_ndc[current_svg] * (Vector2D(0, 0)); a.x--; a.y++;
   Vector2D b = ndc_to_screen * svg_to_ndc[current_svg] * (Vector2D(svg.width, 0)); b.x++; b.y++;

@@ -124,24 +124,25 @@ namespace CGL {
       int ymin = min(y0, min(y1, y2));
       int ymax = max(y0, max(y1, y2));
 
+
       for (int x = xmin; x <= xmax; x++) {
           for (int y = ymin; y <= ymax; y++) {
               float count = 0;
 
               for (int di = 0; di <= n; di++) {
                   float dx = v[n][di];
-
+                  /*dx = ((float)rand()) / RAND_MAX;*/
 
                   for (int dj = 0; dj <= n; dj++) {
                       float dy = v[n][dj];
-
+                      /*dy = ((float)rand()) / RAND_MAX;*/
 
                       float sx = x + dx;
                       float sy = y + dy;
 
                       float d01 = (sx - x0) * (y1 - y0) - (sy - y0) * (x1 - x0);
                       float d12 = (sx - x1) * (y2 - y1) - (sy - y1) * (x2 - x1);
-                      float d02 = (sx - x2) * (y0 - y2) - (sy - y2) * (x0 - x2);                    
+                      float d02 = (sx - x2) * (y0 - y2) - (sy - y2) * (x0 - x2);
 
                       int k = dj * sqrt(sample_rate) + di;
 
@@ -168,6 +169,9 @@ namespace CGL {
 
   void RasterizerImp::rasterize_interpolated_color_triangle(float x0, float y0, Color c0, float x1, float y1, Color c1, float x2, float y2, Color c2){
 
+      int n = sqrt(sample_rate) - 1;
+      vector<vector<float>> v{ {0.5}, {0.25, 0.75}, {1.0 / 6.0, 3.0 / 6.0, 5.0 / 6.0}, {1.0 / 8.0, 3.0 / 8.0, 5.0 / 8.0, 7.0 / 8.0} };
+
       int xmin = min(x0, min(x1, x2));
       int xmax = max(x0, max(x1, x2));
       int ymin = min(y0, min(y1, y2));
@@ -175,24 +179,40 @@ namespace CGL {
 
       for (int x = xmin; x <= xmax; x++) {
           for (int y = ymin; y <= ymax; y++) {
-              float sx = x + 0.5;
-              float sy = y + 0.5;
 
-              float a = (-1 * (sx - x1) * (y2 - y1) + (sy - y1) * (x2 - x1));
-              a = a /   (-1 * (x0 - x1) * (y2 - y1) + (y0 - y1) * (x2 - x1));
+              for (int di = 0; di <= n; di++) {
+                  float dx = v[n][di];
+                  /*dx = ((float)rand()) / RAND_MAX;*/
 
-              float b = (-1 * (sx - x2) * (y0 - y2) + (sy - y2) * (x0 - x2));
-              b = b /   (-1 * (x1 - x2) * (y0 - y2) + (y1 - y2) * (x0 - x2));
+                  for (int dj = 0; dj <= n; dj++) {
+                      float dy = v[n][dj];
 
-              float c = (-1 * (sx - x0) * (y1 - y0) + (sy - y0) * (x1 - x0));
-              c = c /   (-1 * (x2 - x0) * (y1 - y0) + (y2 - y0) * (x1 - x0));
+                      float sx = x + dx;
+                      float sy = y + dy;
 
-              if (a >= 0 && b >= 0 && c >= 0) {
-                  rasterize_point(x, y, 1, c0 * a + c1 * b + c2 * c);
+                      float a = (-1 * (sx - x1) * (y2 - y1) + (sy - y1) * (x2 - x1));
+                      a = a / (-1 * (x0 - x1) * (y2 - y1) + (y0 - y1) * (x2 - x1));
+
+                      float b = (-1 * (sx - x2) * (y0 - y2) + (sy - y2) * (x0 - x2));
+                      b = b / (-1 * (x1 - x2) * (y0 - y2) + (y1 - y2) * (x0 - x2));
+
+                      float c = (-1 * (sx - x0) * (y1 - y0) + (sy - y0) * (x1 - x0));
+                      c = c / (-1 * (x2 - x0) * (y1 - y0) + (y2 - y0) * (x1 - x0));
+
+                      int k = dj * sqrt(sample_rate) + di;
+
+                      if (a >= 0 && b >= 0 && c >= 0) {
+                          rasterize_point(x, y, k, c0 * a + c1 * b + c2 * c);
+                      }
+                      else if (a <= 0 && b <= 0 && c <= 0) {
+                          rasterize_point(x, y, k, c0 * a + c1 * b + c2 * c);
+                      }
+
+                  }
+
               }
-              else if (a <= 0 && b <= 0 && c <= 0) {
-                  rasterize_point(x, y, 1, c0 * a + c1 * b + c2 * c);
-              }
+
+              
 
 
           }
@@ -202,11 +222,15 @@ namespace CGL {
 
   }
 
+  
+
   void RasterizerImp::rasterize_textured_triangle(float x0, float y0, float u0, float v0, float x1, float y1, float u1, float v1, float x2, float y2, float u2, float v2, Texture& tex){
       int xmin = min(x0, min(x1, x2));
       int xmax = max(x0, max(x1, x2));
       int ymin = min(y0, min(y1, y2));
       int ymax = max(y0, max(y1, y2));
+
+      //cout << x0 << " " << y0 << " " << u0 << " " << v0 << " " << x1 << " " << y1 << " " << u1 << " " << v1 << " " << x2 << " " << y2 << " " << u2 << " " << v2 << "\n";
 
       int n = sqrt(sample_rate) - 1;
       vector<vector<float>> v{ {0.5}, {0.25, 0.75}, {1.0 / 6.0, 3.0 / 6.0, 5.0 / 6.0}, {1.0 / 8.0, 3.0 / 8.0, 5.0 / 8.0, 7.0 / 8.0} };
@@ -239,61 +263,61 @@ namespace CGL {
                       float d12 = (sx - x1) * (y2 - y1) - (sy - y1) * (x2 - x1);
                       float d02 = (sx - x2) * (y0 - y2) - (sy - y2) * (x0 - x2);
 
-                      //cout << d01 << " " << d12 << " " << d02 << "\n";
+                      float u = u0 * a + u1 * b + u2 * c;
+                      float v = v0 * a + v1 * b + v2 * c;
+                      Vector2D uv = Vector2D(u, v);
+
+                      if (!((d01 >= 0 && d12 >= 0 && d02 >= 0) || (d01 <= 0 && d12 <= 0 && d02 <= 0))) {
+                          continue;
+                      }
+
+                      float ax = (-1 * (sx + 1 - x1) * (y2 - y1) + (sy - y1) * (x2 - x1)) / (-1 * (x0 - x1) * (y2 - y1) + (y0 - y1) * (x2 - x1));
+                      float bx = (-1 * (sx + 1 - x2) * (y0 - y2) + (sy - y2) * (x0 - x2)) / (-1 * (x1 - x2) * (y0 - y2) + (y1 - y2) * (x0 - x2));
+                      float cx = (-1 * (sx + 1 - x0) * (y1 - y0) + (sy - y0) * (x1 - x0)) / (-1 * (x2 - x0) * (y1 - y0) + (y2 - y0) * (x1 - x0));
+
+                      float ay = (-1 * (sx - x1) * (y2 - y1) + (sy + 1 - y1) * (x2 - x1)) / (-1 * (x0 - x1) * (y2 - y1) + (y0 - y1) * (x2 - x1));
+                      float by = (-1 * (sx - x2) * (y0 - y2) + (sy + 1 - y2) * (x0 - x2)) / (-1 * (x1 - x2) * (y0 - y2) + (y1 - y2) * (x0 - x2));
+                      float cy = (-1 * (sx - x0) * (y1 - y0) + (sy + 1 - y0) * (x1 - x0)) / (-1 * (x2 - x0) * (y1 - y0) + (y2 - y0) * (x1 - x0));
+
+                      float ux = u0 * ax + u1 * bx + u2 * cx;
+                      float vx = v0 * ax + v1 * bx + v2 * cx;
+
+                      float uy = u0 * ay + u1 * by + u2 * cy;
+                      float vy = v0 * ay + v1 * by + v2 * cy;
+
+                      SampleParams sp = SampleParams();
+                      sp.p_uv = uv;
+                      sp.p_dx_uv = Vector2D(ux, vx) - uv;
+                      sp.p_dy_uv = Vector2D(uy, vy) - uv;
+                      sp.lsm = lsm;
+                      sp.psm = psm;
+
+                      Color col = tex.sample(sp);
+                      rasterize_point(x, y, k, col);
 
 
-                      if ((d01 >= 0 && d12 >= 0 && d02 >= 0) || (d01 <= 0 && d12 <= 0 && d02 <= 0)) {
-                          if (psm == P_NEAREST) {
-                              float u = u0 * a + u1 * b + u2 * c;
-                              float v = v0 * a + v1 * b + v2 * c;
-                              Vector2D uv = Vector2D(u, v);
-                              rasterize_point(x, y, k, tex.sample_nearest(uv, 0));
+                      //if (lsm == L_ZERO) {
+                      //    
+                      //    if (psm == P_NEAREST) {
+                      //        rasterize_point(x, y, k, tex.sample_nearest(uv, 0));
+                      //    }
+                      //    else if (psm == P_LINEAR) {
+                      //        rasterize_point(x, y, k, tex.sample_bilinear(uv, 0));
+                      //    }
+                      //}
 
-                          }
-                          else if (psm == P_LINEAR) {
-                              float u = u0 * a + u1 * b + u2 * c;
-                              float v = v0 * a + v1 * b + v2 * c;
-                              Vector2D uv = Vector2D(u, v);
-                              rasterize_point(x, y, k, tex.sample_bilinear(uv, 0));
-                          }
+
+                      
+
+
+                    
                         
 
                       
-                      }
+                      
 
                   }
               }
-              
-
-              //float sx = x + 0.5;
-              //float sy = y + 0.5;
-
-              //float c = (sx - x0) * (y1 - y0) - (sy - y0) * (x1 - x0);
-
-              //float a = (sx - x1) * (y2 - y1) - (sy - y1) * (x2 - x1);
-              //float b = (sx - x2) * (y0 - y2) - (sy - y2) * (x0 - x2);
-
-              //a = a / ((x2 - x0) * (y1 - y0) - (y2 - y0) * (x1 - x0));
-              //b = b / ((x0 - x1) * (y2 - y1) - (y0 - y1) * (x2 - x1));
-              //c = c / ((x1 - x2) * (y0 - y2) - (y1 - y2) * (x0 - x2));
-
-              //if ((a >= 0 && b >= 0 && c >= 0) || (a <= 0 && b <= 0 && c <= 0)) {
-
-              //    if (psm == P_NEAREST) {
-              //        float u = u0 * a + u1 * b + u2 * c;
-              //        float v = v0 * a + v1 * b + v2 * c;
-              //        Vector2D uv = Vector2D(u, v);
-              //        rasterize_point(x, y, tex.sample_nearest(uv, 0));
-
-              //    }
-              //    else if (psm == P_LINEAR) {
-              //        float u = u0 * a + u1 * b + u2 * c;
-              //        float v = v0 * a + v1 * b + v2 * c;
-              //        Vector2D uv = Vector2D(u, v);
-              //        rasterize_point(x, y, tex.sample_bilinear(uv, 0));
-              //    }
-
-              //}
 
 
           }
